@@ -24,6 +24,7 @@
 }
 
 *, *::before, *::after { box-sizing: border-box; }
+[hidden] { display: none !important; }
 html { scroll-behavior: smooth; -webkit-text-size-adjust: 100%; }
 body {
   margin: 0;
@@ -271,6 +272,123 @@ section { position: relative; scroll-margin-top: 64px; }
 /* Marca BL */
 .marca-bl { position: fixed; right: 18px; bottom: 18px; z-index: 35; width: 26px; height: auto; opacity: .75; pointer-events: none; }
 
+/* Pedido — botões de adicionar (ix-cart-flight) */
+.linha-preco { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.linha-preco .preco { margin: 0; }
+.burger .linha-preco { margin: 4px 0 6px; }
+.add {
+  position: relative; flex-shrink: 0; width: 40px; height: 40px; border-radius: 50%;
+  border: 0; background: var(--ambar); color: var(--tinta); cursor: pointer;
+  font: 700 22px/1 var(--texto); display: grid; place-items: center;
+  transition: transform var(--t-press) var(--ease-out), background-color var(--t-ui);
+  -webkit-tap-highlight-color: transparent;
+}
+.add:active { transform: scale(.88); }
+@media (hover: hover) { .add:hover { background: var(--ambar-2); } }
+.cardapio .add { background: var(--tinta); color: var(--papel); }
+@media (hover: hover) { .cardapio .add:hover { background: #3a2a1c; } }
+.add .qtd { position: absolute; top: -5px; right: -5px; min-width: 20px; height: 20px; padding: 0 5px; border-radius: 10px; background: var(--cobre-escuro); color: #fff; font-size: 12px; line-height: 20px; text-align: center; transform: scale(0); transition: transform var(--t-ui) var(--ease-out); }
+.add.tem .qtd { transform: scale(1); }
+.add.pulso { animation: pulso 360ms var(--ease-out); }
+@keyframes pulso { 40% { transform: scale(1.18); } }
+.mais { display: inline-grid; place-items: center; width: 22px; height: 22px; border-radius: 50%; background: var(--tinta); color: var(--papel); font-size: 15px; vertical-align: 1px; }
+.voo { position: fixed; z-index: 90; width: 14px; height: 14px; margin: -7px 0 0 -7px; border-radius: 50%; background: var(--ambar); box-shadow: 0 0 0 3px rgba(240, 166, 58, .3); pointer-events: none; }
+
+.porcao .linha-preco { margin-top: 6px; }
+.doces .linha-preco { margin-top: 4px; }
+.doces .add { width: 36px; height: 36px; font-size: 20px; }
+.lista-preco li { display: flex; align-items: center; gap: 10px; padding: 9px 0; border-bottom: 1px solid var(--linha); }
+.lista-preco span { font-weight: 600; }
+.lista-preco i { flex: 1; border-bottom: 1px dotted var(--papel-3); translate: 0 -4px; min-width: 12px; }
+.lista-preco b { color: var(--ambar); font-stretch: 90%; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.lista-preco .add { width: 34px; height: 34px; font-size: 19px; }
+.extras { max-width: var(--max); margin: 64px auto 0; padding: 0 var(--gutter); box-sizing: content-box; }
+.extras-grade { columns: 3 300px; column-gap: 40px; }
+.extra { break-inside: avoid; margin-bottom: 28px; }
+.extra h3 { font-size: 13px; letter-spacing: .14em; text-transform: uppercase; color: var(--ambar); font-weight: 600; padding-bottom: 6px; border-bottom: 1px solid var(--linha); }
+.extra li { font-size: 15px; }
+
+/* Botão da sacola no topo */
+.sacola-btn {
+  position: relative; display: inline-flex; align-items: center; gap: 8px; min-height: 42px; padding: 0 16px 0 14px;
+  border-radius: 999px; border: 0; background: var(--ambar); color: var(--tinta); cursor: pointer;
+  font: 700 14px/1 var(--texto); font-stretch: 92%;
+  transition: transform var(--t-press) var(--ease-out), background-color var(--t-ui);
+}
+.sacola-btn:active { transform: scale(.95); }
+@media (hover: hover) { .sacola-btn:hover { background: var(--ambar-2); } }
+.sacola-btn svg { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linejoin: round; }
+.sacola-n { min-width: 22px; height: 22px; padding: 0 6px; border-radius: 11px; background: var(--tinta); color: var(--papel); font-size: 12px; line-height: 22px; text-align: center; }
+.sacola-btn.pulso { animation: pulso 420ms var(--ease-out); }
+
+/* Sacola — ix-drawer-push (desktop) / ix-sheet-detents (celular) */
+.sacola {
+  position: fixed; inset: 0 0 0 auto; margin: 0; width: min(440px, 100vw); max-width: 100vw; height: 100dvh; max-height: 100dvh;
+  padding: 0; border: 0; background: var(--casco); color: var(--papel);
+  box-shadow: -30px 0 60px rgba(0, 0, 0, .5); flex-direction: column;
+}
+.sacola[open] { display: flex; animation: gavetaEntra var(--t-painel) var(--ease-out); }
+.sacola.saindo { animation: gavetaSai 260ms var(--ease-io) forwards; }
+.sacola::backdrop { background: rgba(5, 4, 3, .62); }
+@keyframes gavetaEntra { from { transform: translateX(100%); } }
+@keyframes gavetaSai { to { transform: translateX(100%); } }
+.sacola-cab { display: flex; align-items: center; justify-content: space-between; padding: 18px 20px; border-bottom: 1px solid var(--linha); margin: 0; }
+.sacola-cab h2 { font-size: 32px; }
+.fechar { width: 44px; height: 44px; border-radius: 50%; border: 1.5px solid var(--linha); background: transparent; color: var(--papel); font-size: 26px; line-height: 1; cursor: pointer; }
+.sacola-corpo { flex: 1; overflow-y: auto; overscroll-behavior: contain; padding: 8px 20px calc(24px + env(safe-area-inset-bottom)); }
+.sacola-vazia { padding: 28px 0; color: var(--papel-2); }
+.sacola-vazia b { color: var(--ambar); }
+.sacola.vazia .sacola-total, .sacola.vazia .sacola-form { display: none; }
+.sacola:not(.vazia) .sacola-vazia { display: none; }
+.sacola-itens li { display: grid; grid-template-columns: 1fr auto; gap: 4px 12px; align-items: center; padding: 14px 0; border-bottom: 1px solid var(--linha); }
+.si-nome { font-weight: 600; }
+.si-preco { grid-column: 1; font-size: 14px; color: var(--papel-2); font-variant-numeric: tabular-nums; }
+.si-ctrl { grid-column: 2; grid-row: 1 / span 2; display: flex; align-items: center; gap: 4px; border: 1.5px solid var(--linha); border-radius: 999px; padding: 3px; }
+.si-ctrl button { width: 36px; height: 36px; border-radius: 50%; border: 0; background: transparent; color: var(--papel); font-size: 20px; cursor: pointer; }
+.si-ctrl button:active { background: rgba(241, 230, 207, .12); }
+.si-ctrl output { min-width: 22px; text-align: center; font-weight: 700; font-variant-numeric: tabular-nums; }
+.sacola-total { display: flex; justify-content: space-between; align-items: baseline; padding: 16px 0 6px; font-size: 18px; }
+.sacola-total b { color: var(--ambar); font-size: 24px; font-stretch: 85%; font-variant-numeric: tabular-nums; }
+.sacola-form { display: grid; gap: 14px; margin-top: 12px; }
+.campo { display: grid; gap: 6px; border: 0; margin: 0; padding: 0; }
+.campo > span, .campo legend { font-size: 13px; letter-spacing: .06em; text-transform: uppercase; color: var(--papel-2); font-weight: 600; padding: 0; }
+.campo small { text-transform: none; letter-spacing: 0; font-weight: 400; }
+.campo input, .campo textarea {
+  width: 100%; padding: 12px 14px; border-radius: 12px; border: 1.5px solid rgba(241, 230, 207, .22);
+  background: var(--tinta); color: var(--papel); font: 16px/1.4 var(--texto); resize: vertical;
+}
+.campo input:focus, .campo textarea:focus { outline: none; border-color: var(--ambar); }
+.campo [aria-invalid="true"] { border-color: #e36b4f; }
+.modo { display: flex; flex-wrap: wrap; gap: 8px; }
+.modo legend { width: 100%; margin-bottom: 6px; }
+.modo label { position: relative; cursor: pointer; }
+.modo input { position: absolute; opacity: 0; inset: 0; }
+.modo span { display: inline-flex; align-items: center; min-height: 44px; padding: 0 16px; border-radius: 999px; border: 1.5px solid rgba(241, 230, 207, .3); font-weight: 600; font-size: 15px; transition: background-color var(--t-ui), color var(--t-ui); }
+.modo input:checked + span { background: var(--papel); color: var(--tinta); border-color: var(--papel); }
+.modo input:focus-visible + span { outline: 2px solid var(--ambar); outline-offset: 3px; }
+.campo-end[hidden] { display: none; }
+.sacola-erro { color: #ff9a80; font-size: 14px; }
+.sacola-erro:empty { display: none; }
+.btn-enviar { width: 100%; min-height: 54px; font-size: 16px; }
+.sacola-nota { font-size: 13px; color: var(--papel-3); }
+
+.aviso-add { position: fixed; left: 50%; bottom: 24px; z-index: 60; translate: -50% 0; margin: 0; padding: 10px 16px; border-radius: 999px; background: var(--papel); color: var(--tinta); font-weight: 600; font-size: 14px; box-shadow: 0 10px 30px rgba(0, 0, 0, .4); opacity: 0; pointer-events: none; transition: opacity var(--t-ui), translate var(--t-ui) var(--ease-out); white-space: nowrap; }
+.aviso-add.on { opacity: 1; translate: -50% -6px; }
+
+@media (max-width: 760px) {
+  .aviso-add { bottom: calc(84px + env(safe-area-inset-bottom)); }
+  .sacola-txt { display: none; }
+  .sacola-btn { padding: 0 12px; }
+  .sacola { inset: auto 0 0 0; width: 100vw; height: auto; max-height: 92dvh; border-radius: 22px 22px 0 0; box-shadow: 0 -20px 50px rgba(0, 0, 0, .5); }
+  .sacola[open] { animation-name: folhaEntra; }
+  .sacola.saindo { animation-name: folhaSai; }
+  .barra-sacola { flex: 1 1 100%; }
+  .barra-sacola[hidden] { display: none; }
+  .extras-grade { columns: 1; }
+}
+@keyframes folhaEntra { from { transform: translateY(100%); } }
+@keyframes folhaSai { to { transform: translateY(100%); } }
+
 /* Responsivo */
 @media (max-width: 900px) {
   .hero { padding-top: 84px; padding-bottom: 70px; min-height: auto; }
@@ -286,7 +404,6 @@ section { position: relative; scroll-margin-top: 64px; }
 }
 @media (max-width: 760px) {
   .barra { display: flex; }
-  .barra[aria-hidden="true"] { visibility: visible; }
   .marca-bl { display: none; }
   .rodape { padding-bottom: 120px; }
   .trilho { grid-auto-columns: 72%; }

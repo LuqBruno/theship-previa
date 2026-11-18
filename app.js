@@ -34,7 +34,8 @@
     const max = document.documentElement.scrollHeight - window.innerHeight;
     rota?.style.setProperty('--rota', max > 0 ? (y / max).toFixed(4) : 0);
     const fimVisivel = $('#atracar').getBoundingClientRect().top < window.innerHeight * 0.6;
-    barra?.classList.toggle('on', y > h * 0.7 && !fimVisivel);
+    const temItens = !document.querySelector('.barra-sacola')?.hidden;
+    barra?.classList.toggle('on', (y > h * 0.7 && !fimVisivel) || (temItens && y > h * 0.3));
   };
   const agenda = () => { if (!pendente) { pendente = true; requestAnimationFrame(quadro); } };
   window.addEventListener('scroll', agenda, { passive: true });
@@ -151,4 +152,164 @@
     window.addEventListener('resize', confereSetas);
     confereSetas();
   }
+
+  /* Pedido pela página → mensagem no WhatsApp */
+  const WA = '5548991351155';
+  let catalogo = {};
+  try { catalogo = JSON.parse($('#catalogo').textContent); } catch (e) { catalogo = {}; }
+  const brl = (v) => 'R$ ' + v.toFixed(2).replace('.', ',');
+  const CHAVE = 'theship-pedido-v1';
+  let itens = {};
+  try { const s = JSON.parse(localStorage.getItem(CHAVE) || '{}'); for (const k in s) if (catalogo[k] && s[k] > 0) itens[k] = Math.min(99, s[k] | 0); } catch (e) { itens = {}; }
+  const salva = () => { try { localStorage.setItem(CHAVE, JSON.stringify(itens)); } catch (e) { /* sem armazenamento */ } };
+
+  const sacola = $('.sacola');
+  const lista = $('.sacola-itens');
+  const form = $('.sacola-form');
+  const erro = $('.sacola-erro');
+  const aviso = $('.aviso-add');
+  const sacolaBtns = $$('[data-abrir-sacola]');
+  const topoSacola = $('.sacola-btn');
+  const totais = () => {
+    let n = 0, v = 0;
+    for (const k in itens) { n += itens[k]; v += itens[k] * catalogo[k].p; }
+    return { n, v };
+  };
+
+  const render = () => {
+    const { n, v } = totais();
+    $('.sacola-n').textContent = n;
+    topoSacola.setAttribute('aria-label', `Abrir pedido, ${n} ${n === 1 ? 'item' : 'itens'}`);
+    $('.sacola-subtotal').textContent = brl(v);
+    sacola.classList.toggle('vazia', n === 0);
+    const barraSac = $('.barra-sacola');
+    barraSac.hidden = n === 0;
+    $('.barra-resumo').textContent = `${n} ${n === 1 ? 'item' : 'itens'} · ${brl(v)}`;
+    $$('.barra-montar, .barra-wa').forEach((a) => { a.hidden = n > 0; });
+    $$('.add[data-add]').forEach((b) => {
+      const q = itens[b.dataset.add] || 0;
+      b.classList.toggle('tem', q > 0);
+      b.querySelector('.qtd').textContent = q || '';
+    });
+    lista.textContent = '';
+    for (const k in itens) {
+      const it = catalogo[k];
+      const li = document.createElement('li');
+      li.innerHTML = `<span class="si-nome"></span><span class="si-preco"></span>
+        <span class="si-ctrl"><button type="button" data-menos></button><output></output><button type="button" data-mais>+</button></span>`;
+      li.querySelector('.si-nome').textContent = it.n;
+      li.querySelector('.si-preco').textContent = `${brl(it.p)} · ${brl(it.p * itens[k])}`;
+      li.querySelector('output').textContent = itens[k];
+      const menos = li.querySelector('[data-menos]');
+      menos.textContent = itens[k] === 1 ? '×' : '−';
+      menos.setAttribute('aria-label', itens[k] === 1 ? `Remover ${it.n}` : `Diminuir ${it.n}`);
+      li.querySelector('[data-mais]').setAttribute('aria-label', `Aumentar ${it.n}`);
+      menos.addEventListener('click', () => muda(k, -1, menos));
+      li.querySelector('[data-mais]').addEventListener('click', () => muda(k, 1));
+      lista.append(li);
+    }
+    salva();
+    agenda();
+  };
+
+  const muda = (k, d, origemFoco) => {
+    const pos = Object.keys(itens).indexOf(k);
+    itens[k] = (itens[k] || 0) + d;
+    if (itens[k] <= 0) delete itens[k];
+    else itens[k] = Math.min(99, itens[k]);
+    render();
+    if (origemFoco) {
+      const n = lista.children.length;
+      const alvo = n ? lista.children[Math.min(pos, n - 1)].querySelector('[data-menos]') : $('.fechar');
+      alvo?.focus();
+    }
+  };
+
+  let avisoT;
+  const avisa = (txt) => {
+    aviso.textContent = txt;
+    aviso.classList.add('on');
+    clearTimeout(avisoT);
+    avisoT = setTimeout(() => aviso.classList.remove('on'), 1800);
+  };
+
+  const voa = (de) => {
+    const alvoBtn = window.matchMedia('(max-width: 760px)').matches && !$('.barra-sacola').hidden ? $('.barra-sacola') : topoSacola;
+    const pulsa = () => { alvoBtn.classList.remove('pulso'); void alvoBtn.offsetWidth; alvoBtn.classList.add('pulso'); };
+    if (reduz.matches || !de || !alvoBtn.getBoundingClientRect().width) return pulsa();
+    const a = de.getBoundingClientRect(), b = alvoBtn.getBoundingClientRect();
+    const dot = document.createElement('span'); dot.className = 'voo';
+    dot.style.left = a.left + a.width / 2 + 'px'; dot.style.top = a.top + a.height / 2 + 'px';
+    document.body.append(dot);
+    const dx = b.left + b.width / 2 - (a.left + a.width / 2), dy = b.top + b.height / 2 - (a.top + a.height / 2);
+    dot.animate([
+      { transform: 'translate(0,0) scale(1)' },
+      { transform: `translate(${dx * 0.5}px, ${dy * 0.5 - 60}px) scale(1.2)`, offset: 0.5 },
+      { transform: `translate(${dx}px, ${dy}px) scale(.5)`, opacity: 0.6 },
+    ], { duration: 560, easing: 'cubic-bezier(.45,0,.25,1)' }).onfinish = () => { dot.remove(); pulsa(); };
+  };
+
+  const adiciona = (k, botao) => {
+    if (!catalogo[k]) return;
+    itens[k] = Math.min(99, (itens[k] || 0) + 1);
+    render();
+    if (botao) { botao.classList.remove('pulso'); void botao.offsetWidth; botao.classList.add('pulso'); }
+    voa(botao);
+    avisa(`${catalogo[k].n} no pedido (${itens[k]})`);
+  };
+
+  document.addEventListener('click', (ev) => {
+    const b = ev.target.closest('.add[data-add]');
+    if (b) adiciona(b.dataset.add, b);
+  });
+  $('[data-add-kraken]')?.addEventListener('click', (ev) => {
+    const k = Number($('input[name="kraken"]:checked').value);
+    adiciona({ 2: 'double-kraken', 3: 'triple-kraken', 4: 'monster-kraken' }[k], ev.currentTarget);
+  });
+
+  const abre = () => {
+    if (typeof sacola.showModal !== 'function') { sacola.setAttribute('open', ''); return; }
+    sacola.classList.remove('saindo');
+    sacola.showModal();
+    erro.textContent = '';
+  };
+  const fecha = () => {
+    if (!sacola.open) return;
+    if (reduz.matches) return sacola.close();
+    sacola.classList.add('saindo');
+    setTimeout(() => { sacola.classList.remove('saindo'); sacola.close(); }, 250);
+  };
+  sacolaBtns.forEach((b) => b.addEventListener('click', abre));
+  $('.sacola-cab').addEventListener('submit', (ev) => { ev.preventDefault(); fecha(); });
+  sacola.addEventListener('cancel', (ev) => { ev.preventDefault(); fecha(); });
+  sacola.addEventListener('click', (ev) => { if (ev.target === sacola) fecha(); });
+
+  const campoEnd = $('.campo-end');
+  const syncModo = () => { campoEnd.hidden = form.modo.value !== 'Entrega'; };
+  $$('input[name="modo"]', form).forEach((r) => r.addEventListener('change', syncModo));
+  syncModo();
+
+  form.addEventListener('submit', (ev) => {
+    ev.preventDefault();
+    const { n, v } = totais();
+    const nome = form.nome.value.trim();
+    const end = form.endereco.value.trim();
+    const modo = form.modo.value;
+    form.nome.removeAttribute('aria-invalid'); form.endereco.removeAttribute('aria-invalid');
+    if (!n) { erro.textContent = 'Adicione pelo menos um item.'; return; }
+    if (!nome) { erro.textContent = 'Informe seu nome.'; form.nome.setAttribute('aria-invalid', 'true'); form.nome.focus(); return; }
+    if (modo === 'Entrega' && end.length < 6) { erro.textContent = 'Informe o endereço de entrega ou escolha retirada.'; form.endereco.setAttribute('aria-invalid', 'true'); form.endereco.focus(); return; }
+    erro.textContent = '';
+    const linhas = ['Olá, The Ship! Quero fazer um pedido pelo site:', ''];
+    for (const k in itens) linhas.push(`${itens[k]}x ${catalogo[k].n} — ${brl(catalogo[k].p * itens[k])}`);
+    linhas.push('', `Subtotal: ${brl(v)}`, `Nome: ${nome}`);
+    linhas.push(modo === 'Entrega' ? `Entrega: ${end}` : 'Retirada no balcão');
+    const obs = form.obs.value.trim();
+    if (obs) linhas.push(`Observações: ${obs}`);
+    linhas.push('', 'Valores do site; aguardo a confirmação do total, taxa e pagamento.');
+    const url = `https://wa.me/${WA}?text=${encodeURIComponent(linhas.join('\n'))}`;
+    window.open(url, '_blank', 'noopener');
+  });
+
+  render();
 })();
